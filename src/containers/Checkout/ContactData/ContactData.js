@@ -1,12 +1,13 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import axios from '../../../axios-orders';
 
 import classes from './ContactData.module.css';
 import Spinner from '../../../components/UI/Spinner/Spinner';
 import Button from '../../../components/UI/Button/Button';
 import Input from '../../../components/UI/Input/Input';
-
-const ORDERS_ENDPOINT = '/orders.json';
+import * as actions from '../../../store/actions/index';
+import withErrorHandler from '../../../hoc/withErrorHandler/withErrorHandler';
 
 class ContactData extends Component {
   state = {
@@ -21,15 +22,15 @@ class ContactData extends Component {
         elementConfig: {
           options: [
             { value: 'fastest', displayValue: 'Fastest' },
-            { value: 'cheapest', displayValue: 'Cheapest' },
-          ],
+            { value: 'cheapest', displayValue: 'Cheapest' }
+          ]
         },
         value: 'cheapest',
         validation: {},
-        valid: true,
-      },
+        valid: true
+      }
     },
-    formIsValid: false,
+    formIsValid: false
   };
 
   createInputElement(elementType, inputType, placeholder, value, validation) {
@@ -37,18 +38,17 @@ class ContactData extends Component {
       elementType: elementType,
       elementConfig: {
         type: inputType,
-        placeholder: placeholder,
+        placeholder: placeholder
       },
       value: value,
       validation: validation,
       valid: false,
-      touched: false,
+      touched: false
     };
   }
 
   orderHandler = (event) => {
     event.preventDefault(); // Don't reload the page
-    this.setState({ loading: true });
     const formData = {};
     for (let formElementIdentifier in this.state.orderForm) {
       formData[formElementIdentifier] = this.state.orderForm[formElementIdentifier].value;
@@ -56,17 +56,9 @@ class ContactData extends Component {
     const order = {
       ingredients: this.props.ingredients,
       price: this.props.price,
-      orderData: formData,
+      orderData: formData
     };
-    axios
-      .post(ORDERS_ENDPOINT, order)
-      .then((response) => {
-        this.setState({ loading: false });
-        this.props.history.push('/');
-      })
-      .catch((error) => {
-        this.setState({ loading: false });
-      });
+    this.props.onOrderBurger(order);
   };
 
   checkValidity(value, rules) {
@@ -86,7 +78,7 @@ class ContactData extends Component {
 
   inputChangedHandler = (event, inputIdentifier) => {
     const updatedOrderForm = {
-      ...this.state.orderForm,
+      ...this.state.orderForm
     };
     // Have to go down another level because the spread operator creates a shallow copy
     // Value is two levels down so we have to do the spread down two levels
@@ -107,7 +99,7 @@ class ContactData extends Component {
     for (let key in this.state.orderForm) {
       formElementsArray.push({
         id: key,
-        config: this.state.orderForm[key],
+        config: this.state.orderForm[key]
       });
     }
     let form = (
@@ -129,7 +121,7 @@ class ContactData extends Component {
         </Button>
       </form>
     );
-    if (this.state.loading) {
+    if (this.props.loading) {
       form = <Spinner />;
     }
     return (
@@ -141,4 +133,18 @@ class ContactData extends Component {
   }
 }
 
-export default ContactData;
+const mapStateToProps = (state) => {
+  return {
+    ingredients: state.burgerBuilder.ingredients,
+    price: state.burgerBuilder.totalPrice,
+    loading: state.order.loading
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    onOrderBurger: (orderData) => dispatch(actions.purchaseBurger(orderData))
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(withErrorHandler(ContactData, axios));

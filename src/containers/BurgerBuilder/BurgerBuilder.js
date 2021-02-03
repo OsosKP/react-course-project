@@ -13,7 +13,7 @@ import axios from '../../axios-orders';
 
 const CHECKOUT_ENDPOINT = '/checkout';
 const AUTH_ENDPOINT = '/auth';
-class BurgerBuilder extends Component {
+export class BurgerBuilder extends Component {
   state = {
     purchasing: false
   };
